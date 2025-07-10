@@ -1,0 +1,41 @@
+name: bw
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - ollama
+  - scikit-learn
+  - pyqt
+  - qt6-main
+  - qt6-wayland
+  - matplotlib
+  - seaborn
+  - numpy
+  - nltk
+  - pip
+  - tqdm
+  - kneed
+  - pip:
+      - sentence-transformers
+      - torch
+      - torchvision
+      - torchaudio
+      - torchsde
+      - tokenizers
+      - safetensors
+      - einops
+      - ollama
+      - transformers
+      - aiohttp
+      - yarl
+      - pyyaml
+      - Pillow
+      - psutil
+      - comfyui-frontend-package
+      - kornia
+      - spandrel
+      - soundfile
+      - av
+
+      

@@ -1,0 +1,15 @@
+astro meeting - logo kickoff
+
+client wants something that feels "spacey but not sci-fi"
+talked a lot about orbits, satellites, infrastructure in space
+they mentioned “modular” like 3 times—seems important
+not into flashy stuff, more clean and technical
+someone said “like SpaceX but with a bit more warmth”
+colors? maybe dark blue, black, something with depth—no neon
+they liked the idea of a dot or ring around a letter (maybe the `0` in Astro?)
+fonts: clean sans-serif, maybe lowercase
+they don`t want it to look like a toy company or a retro space brand
+mission is something like: making space infrastructure easier to deploy + scale
+they`re not super visual, so want us to explore a few directions
+also mentioned “accessibility” and "future-proof" a couple times
+no tagline yet, but they`re open to one if it fits the logo
