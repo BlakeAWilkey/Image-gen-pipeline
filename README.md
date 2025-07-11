@@ -1,15 +1,6 @@
-## -----------------------------------------------------------------------------
-## Copyright (c) 2025 Blake Wilkey
-##
-## Submitted for Tako – Take-Home Coding Assessment (July 2025)
-##
-## This project is the original work of Blake Wilkey and is provided solely for the
-## purpose of evaluation as part of the hiring process. All rights are reserved.
-## -----------------------------------------------------------------------------
 
-## TAKO Takehome Assessment
-## PATH 2, Track 4: Visual Creation from Informal Briefings
-## Blake Wilkey
+## TAKO Takehome Assessment: Blake Wilkey
+## PATH 2 - Track 4: Visual Creation from Informal Briefings
 
 
 ## Prerequisites
@@ -17,8 +8,10 @@ Before running the script, ensure you have the following:
 
 1. Linux environment
 2. Conda package manager
-3. Nvidia GPU ideally with 10gb VRAM
-4. At least 32gb of system RAM 
+3. Hugging Face Account
+4. Nvidia GPU ideally with 10gb VRAM
+5. 32gb-64gb system RAM 
+6. 50gb storage
 
 
 ## Setup Instructions
@@ -39,14 +32,42 @@ Before running the script, ensure you have the following:
      ```
 
 
+4. **Download Flux-dev Checkpoint file**
+
+   The Checkpoint file can be downloaded from [hugging face](https://huggingface.co/black-forest-labs/FLUX.1-dev/blob/main/flux1-dev.safetensors)
+
+   After downloading, move the file into:
+   ```bash
+   ComfyUI/models/checkpoints
+   ```
+
+5. **Download Flux Text Encoders**
+
+   clip_l can be downloaded from [hugging face](https://huggingface.co/comfyanonymous/flux_text_encoders/blob/main/clip_l.safetensors)
+
+   t5_xxl encoder can be downloaded from [hugging face](https://huggingface.co/comfyanonymous/flux_text_encoders/blob/main/t5xxl_fp16.safetensors)
+   
+   After both have finished downloading, move them into:
+   ```bash 
+   ComfyUI/models/clip
+   ```
+6. **Download VAE**
+
+   Flux's vae can be downloaded from [hugging face](https://huggingface.co/black-forest-labs/FLUX.1-dev/tree/main/vae)
+
+   After the vae file has finished downloading, move it into:
+   ```bash
+   ComfyUI/models/vae
+   ```
+
 ## Viewing Arguments
 Once the environment is activated, you can view required and optional arguments for the launch script using:
 ```bash
 ./main.py -h 
 ```
 
-## Running an Experiment
-In order to generate Images via the pipeline you will need to pass in a text file containing the meeting notes/informal briefing
+## Executing the Pipeline
+In order to generate images via the pipeline, you will need to execute 'main.py' and pass in a text file containing the meeting notes/informal briefing
 NOTE: There are some examples in the data directory
 ```bash
 ./main.py data/Surecell_meeting_notes.txt
