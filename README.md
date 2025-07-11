@@ -2,7 +2,6 @@
 ## TAKO Takehome Assessment: Blake Wilkey
 ## PATH 2 - Track 4: Visual Creation from Informal Briefings
 
-
 ## Prerequisites
 Before running the script, ensure you have the following:
 
@@ -36,17 +35,20 @@ Before running the script, ensure you have the following:
 
    The Checkpoint file can be downloaded from [hugging face](https://huggingface.co/black-forest-labs/FLUX.1-dev/blob/main/flux1-dev.safetensors)
 
+   NOTE: Do not modify the filenames
+
    After downloading, move the file into:
    ```bash
    ComfyUI/models/checkpoints
    ```
 
 5. **Download Flux Text Encoders**
-
-   clip_l can be downloaded from [hugging face](https://huggingface.co/comfyanonymous/flux_text_encoders/blob/main/clip_l.safetensors)
+   clip_l can be downloaded from [hugging face](https://huggingface.co/comfyanonymous/flux_text_encoders/blob/main/clip_l.safetensors).
 
    t5_xxl encoder can be downloaded from [hugging face](https://huggingface.co/comfyanonymous/flux_text_encoders/blob/main/t5xxl_fp16.safetensors)
    
+   NOTE: Do not modify the filenames
+
    After both have finished downloading, move them into:
    ```bash 
    ComfyUI/models/clip
@@ -54,6 +56,8 @@ Before running the script, ensure you have the following:
 6. **Download VAE**
 
    Flux's vae can be downloaded from [hugging face](https://huggingface.co/black-forest-labs/FLUX.1-dev/tree/main/vae)
+
+   NOTE: Do not modify the filenames
 
    After the vae file has finished downloading, move it into:
    ```bash
@@ -88,5 +92,8 @@ NOTE: On less robust systems this will require longer execution time.
 ```
 
 
-## Viewing plotted graphs
+## Viewing Plotted Graphs and System Design Overview
+
 Graphs are saved in the 'graphs' directory. These include clustering log-likelihood and sentence-embedding PCA Eigenvalue graphs
+
+An overview of the Pipeline's System Design is present in 'Pipeline_System_Design.png'

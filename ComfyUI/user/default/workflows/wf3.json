@@ -1,0 +1,153 @@
+{
+"2": {
+    "_meta": {
+        "title": "CLIP Text Encode (Prompt)"
+    },
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+        "clip": [
+            "18",
+            0
+        ],
+        "text": "Warm countryside farm on a sunny day"
+    }
+},
+"3": {
+    "_meta": {
+        "title": "CLIP Text Encode (Prompt)"
+    },
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+        "clip": [
+            "18",
+            0
+        ],
+        "text": "text, watermark, signature, blurry, low quality, low resolution, noisy, grainy, distorted, extra limbs, extra objects,"
+    }
+},
+"4": {
+    "_meta": {
+        "title": "KSampler"
+    },
+    "class_type": "KSampler",
+    "inputs": {
+        "cfg": 3.5,
+        "denoise": 1,
+        "latent_image": [
+            "31",
+            0
+        ],
+        "model": [
+            "16",
+            0
+        ],
+        "negative": [
+            "3",
+            0
+        ],
+        "positive": [
+            "2",
+            0
+        ],
+        "sampler_name": "uni_pc_bh2",
+        "scheduler": "sgm_uniform",
+        "seed": 624669647072431,
+        "steps": 50
+    }
+},
+"6": {
+    "_meta": {
+        "title": "VAE Decode"
+    },
+    "class_type": "VAEDecode",
+    "inputs": {
+        "samples": [
+            "4",
+            0
+        ],
+        "vae": [
+            "17",
+            0
+        ]
+    }
+},
+"16": {
+    "_meta": {
+        "title": "Load Checkpoint"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+        "ckpt_name": "flux1-dev.safetensors"
+    }
+},
+"17": {
+    "_meta": {
+        "title": "Load VAE"
+    },
+    "class_type": "VAELoader",
+    "inputs": {
+        "vae_name": "diffusion_pytorch_model.safetensors"
+    }
+},
+"18": {
+    "_meta": {
+        "title": "DualCLIPLoader"
+    },
+    "class_type": "DualCLIPLoader",
+    "inputs": {
+        "clip_name1": "clip_l.safetensors",
+        "clip_name2": "t5xxl_fp16.safetensors",
+        "device": "default",
+        "type": "flux"
+    }
+},
+"26": {
+    "_meta": {
+        "title": "Upscale Image (using Model)"
+    },
+    "class_type": "ImageUpscaleWithModel",
+    "inputs": {
+        "image": [
+            "6",
+            0
+        ],
+        "upscale_model": [
+            "27",
+            0
+        ]
+    }
+},
+"27": {
+    "_meta": {
+        "title": "Load Upscale Model"
+    },
+    "class_type": "UpscaleModelLoader",
+    "inputs": {
+        "model_name": "2x_CX_100k.pth"
+    }
+},
+"31": {
+    "_meta": {
+        "title": "EmptySD3LatentImage"
+    },
+    "class_type": "EmptySD3LatentImage",
+    "inputs": {
+        "batch_size": 1,
+        "height": 1408,
+        "width": 1408
+    }
+},
+"34": {
+    "_meta": {
+        "title": "Save Image"
+    },
+    "class_type": "SaveImage",
+    "inputs": {
+        "filename_prefix": "ComfyUI",
+        "images": [
+            "26",
+            0
+        ]
+    }
+}
+}
