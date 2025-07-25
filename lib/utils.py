@@ -30,8 +30,15 @@ from sentence_transformers import SentenceTransformer
 from tqdm import trange
 
 
-def embed_sentences(text, transformer_name='all-MiniLM-L6-v2', transformer_dir='./model_cache/sentence_transformer', 
-                    tokenizer_name='punkt', tokenizer_dir='./model_cache/tokenizers', use_pca=False, save_fig=None):
+def embed_sentences(
+    text: str,
+    transformer_name="all-MiniLM-L6-v2",
+    transformer_dir="./model_cache/sentence_transformer",
+    tokenizer_name="punkt",
+    tokenizer_dir="./model_cache/tokenizers",
+    use_pca=False,
+    save_fig=None,
+) -> tuple:
     """
     Tokenizes input text into sentences, encodes them into vector embeddings using a transformer model,
     and optionally applies PCA for dimensionality reduction and variance visualization.
@@ -49,21 +56,18 @@ def embed_sentences(text, transformer_name='all-MiniLM-L6-v2', transformer_dir='
     - np.ndarray: The resulting sentence embeddings (optionally PCA-reduced).
 
     """
-    #Tokenize Input into well defined sentences/clauses
+    # Tokenize Input into well defined sentences/clauses
     nltk.data.path.append(tokenizer_dir)
     try:
-        nltk.data.find(f'tokenizers/{tokenizer_name}')
+        nltk.data.find(f"tokenizers/{tokenizer_name}")
     except LookupError:
         nltk.download(tokenizer_name, download_dir=tokenizer_dir)
-        nltk.download('punkt_tab', download_dir=tokenizer_dir)
+        nltk.download("punkt_tab", download_dir=tokenizer_dir)
     sentences = np.array(sent_tokenize(text))
 
-    #Transform sentences into vector embeddings.
-    model = SentenceTransformer(transformer_name, 
-                                cache_folder=transformer_dir)
-    embeddings =  model.encode(sentences, 
-                                normalize_embeddings=True)
-    
+    # Transform sentences into vector embeddings.
+    model = SentenceTransformer(transformer_name, cache_folder=transformer_dir)
+    embeddings = model.encode(sentences, normalize_embeddings=True)
 
     if use_pca:
         Pca = PCA(n_components=min(embeddings.shape[0], embeddings.shape[1]))
@@ -71,25 +75,37 @@ def embed_sentences(text, transformer_name='all-MiniLM-L6-v2', transformer_dir='
         explained_variance_ratio = Pca.explained_variance_ratio_
         embeddings = Pca.transform(embeddings)
         cumulative_explained_variance = explained_variance_ratio.cumsum()
-        
+
         if save_fig:
-            plt.plot(range(1, len(explained_variance_ratio) + 1), cumulative_explained_variance, marker='o', label='Cumulative Variance')
-            plt.bar(range(1, len(explained_variance_ratio) + 1), explained_variance_ratio, alpha=0.5, label='Individual Variance')
-            plt.title('PCA Explained Variance')
-            plt.xlabel('Principal Component')
-            plt.ylabel('Variance Explained')
+            plt.plot(
+                range(1, len(explained_variance_ratio) + 1),
+                cumulative_explained_variance,
+                marker="o",
+                label="Cumulative Variance",
+            )
+            plt.bar(
+                range(1, len(explained_variance_ratio) + 1),
+                explained_variance_ratio,
+                alpha=0.5,
+                label="Individual Variance",
+            )
+            plt.title("PCA Explained Variance")
+            plt.xlabel("Principal Component")
+            plt.ylabel("Variance Explained")
             plt.xticks(range(1, len(explained_variance_ratio) + 1, 5))
             plt.legend()
             plt.grid(True)
             plt.savefig(save_fig)
             plt.clf()
-    
+
     return sentences, embeddings
 
 
-def find_optimal_clusters(embeddings:np.array, max_clusters:int, save_fig:str) -> np.array:
+def find_optimal_clusters(
+    embeddings: np.array, max_clusters: int, save_fig: str
+) -> np.array:
     """
-    Fits multiple Gaussian Mixture Models (GMMs) to the given embeddings and selects the optimal 
+    Fits multiple Gaussian Mixture Models (GMMs) to the given embeddings and selects the optimal
     number of clusters using the elbow method (via KneeLocator) or gain percentage fallback.
 
     Parameters:
@@ -104,64 +120,113 @@ def find_optimal_clusters(embeddings:np.array, max_clusters:int, save_fig:str) -
     log_likelihoods = np.zeros((10, max_clusters - 1))
     optimal_cluster_size = max_clusters
 
+    # Compute log likelihood multiple times for each # of components, then take the mean of each trial
     for i in trange(0, 5, desc="Fitting EM Clusters"):
         for n in range(2, max_clusters + 1):
             gmm = GaussianMixture(n_components=n, reg_covar=1e-3)
             gmm.fit(embeddings)
-            log_likelihoods[i][n-2] = gmm.lower_bound_
+            log_likelihoods[i][n - 2] = gmm.lower_bound_
     log_likelihoods = log_likelihoods.mean(axis=0)
     plot_log_likelihoods(log_likelihoods, save_fig)
 
-    #Optimal cluster computed with Maximum Curvature (Elbow Method) 
-    knee = KneeLocator(list(range(2, len(log_likelihoods) + 2)), 
-                                  log_likelihoods, curve='convex', 
-                                  direction='increasing', interp_method='polynomial').knee
-    
-    #Curve not ideal for knee locator, use gain percentage
+    # Optimal cluster computed with Maximum Curvature (Elbow Method)
+    knee = KneeLocator(
+        list(range(2, len(log_likelihoods) + 2)),
+        log_likelihoods,
+        curve="convex",
+        direction="increasing",
+        interp_method="polynomial",
+    ).knee
+
+    # Curve not ideal for knee locator, use gain percentage
     if not knee or knee >= len(log_likelihoods):
         gains = np.diff(log_likelihoods)
         ratios = gains[1:] / gains[:-1]
         for i, r in enumerate(ratios, start=2 + 1):
-            if r < .50:
+            if r < 0.50:
                 optimal_cluster_size = i
                 break
     else:
         optimal_cluster_size = knee
 
+    # Now fit-predict with the optimal number of clusters
     gmm = GaussianMixture(n_components=optimal_cluster_size, reg_covar=1e-3)
     gmm.fit(embeddings)
     return gmm.predict(embeddings)
 
-def plot_log_likelihoods(log_likelihoods, save_fig):
-    plt.plot(range(2, len(log_likelihoods) + 2), log_likelihoods, color='black')
-    plt.xlabel('Number of Clusters')
-    plt.ylabel('Log Likelihood')
-    plt.title('Expectation Maximization Log Likelihood')
+
+def plot_log_likelihoods(log_likelihoods: np.array, save_fig: str) -> None:
+    """
+    Plot and save a log likelihood graph
+    """
+    plt.plot(range(2, len(log_likelihoods) + 2), log_likelihoods, color="black")
+    plt.xlabel("Number of Clusters")
+    plt.ylabel("Log Likelihood")
+    plt.title("Expectation Maximization Log Likelihood")
     plt.grid(True)
     plt.savefig(save_fig)
     plt.clf()
-    return  
+    return
 
-def generate_prompt(prompt, model='qwen3:4b', model_dir='', think=False):
+
+def generate_prompt(prompt: str, model="qwen3:4b", model_dir="", think=False) -> str:
+    """
+    Query provided model via ollama
+
+    Parameters:
+    - model (str): LLM choice
+    - model_dir (str): Specifies a custom directory for model download
+    - think (bool): Skip LLM reasoning output
+
+    Raises:
+        TimeoutError: On timeout expiration
+    """
+
     if model_dir:
-        os.environ['OLLAMA_MODELS'] = model_dir
+        os.environ["OLLAMA_MODELS"] = model_dir
 
-    response = ollama.chat(model=model, 
-                           messages=[{'role': 'user', 
-                                      'content': prompt}],
-                           think=think)
-    
-    return response['message']['content']
+    response = ollama.chat(
+        model=model, messages=[{"role": "user", "content": prompt}], think=think
+    )
 
-def generate_image(prompt, label, server_address='127.0.0.1:8188', workflow='./Comfyui/user/default/workflows/wf3.json', prompt_node_id='2', label_node_id='34', model='Flux-dev'):
-    def _poll_comfy_prompt(prompt_id, endpoint='/history/', timeout=1200, interval=30):
+    return response["message"]["content"]
+
+
+def generate_image(
+    prompt,
+    label,
+    server_address="127.0.0.1:8188",
+    workflow="./Comfyui/user/default/workflows/wf3.json",
+    prompt_node_id="2",
+    label_node_id="34",
+    model="Flux-dev",
+) -> None:
+    """
+    Generate an image from a prompt
+
+    Parameters:
+    - prompt (str): Image prompt
+    - label (str): label string used for polling images via comfyui server
+    - server_address (str): comfyui serverip
+    - workflow(str): Path to comfyui image generation workflow json
+    - prompt_node_id (str): workflow node id corresponding to the image prompt
+    - label_node_id (str): workflow node id corresponding to the prompt label
+    - model (str): Image generation checkpoint model name
+
+    Raises:
+        TimeoutError: On timeout expiration
+    """
+
+    def _poll_comfy_prompt(prompt_id, endpoint="/history/", timeout=1200, interval=30):
         url = f"http://{server_address}{endpoint}{prompt_id}"
         start_time = time.time()
         while time.time() - start_time < timeout:
 
             response = requests.get(url)
             if response.status_code != 200:
-                raise Exception(f"Failed getting prompt from ComfyUI - HTTP {response.status_code}: {response.text}")
+                raise Exception(
+                    f"Failed getting prompt from ComfyUI - HTTP {response.status_code}: {response.text}"
+                )
 
             data = response.json().get(prompt_id)
             if not data:
@@ -172,37 +237,38 @@ def generate_image(prompt, label, server_address='127.0.0.1:8188', workflow='./C
             status_str = status.get("status_str", "unknown")
 
             if status_str == "error":
-                raise Exception(f"Comfy UI server raised an exception - HTTP {response.status_code}: {response.text}")
+                raise Exception(
+                    f"Comfy UI server raised an exception - HTTP {response.status_code}: {response.text}"
+                )
             elif status.get("completed"):
-                return 
+                return
             else:
-                print(f"⏳ Status: {status_str}")
                 time.sleep(interval)
 
-        raise TimeoutError(f"⏰ Timed out waiting for prompt {prompt_id} to complete.")
-
-
+        raise TimeoutError(f"Timed out waiting for prompt {prompt_id} to complete.")
 
     workflow_data = {}
-    with open(workflow, 'r') as _workflow:
+    with open(workflow, "r") as _workflow:
         workflow_data = json.load(_workflow)
 
-    workflow_data[prompt_node_id]['inputs']['text'] = prompt
-    workflow_data[label_node_id]['inputs']['filename_prefix'] = label
+    workflow_data[prompt_node_id]["inputs"]["text"] = prompt
+    workflow_data[label_node_id]["inputs"]["filename_prefix"] = label
 
-    result = requests.post(f'http://{server_address}/prompt',
-                  json={'prompt': workflow_data})
-    
+    result = requests.post(
+        f"http://{server_address}/prompt", json={"prompt": workflow_data}
+    )
+
     if result.status_code not in [200]:
         raise Exception(f'Failed Posting Prompt: "{prompt}" to Comfyui Server')
-    
+
     prompt_id = result.json().get("prompt_id")
 
     _poll_comfy_prompt(prompt_id)
 
     return
 
-def copy_files(target_dir, source_dir):
+
+def copy_files(target_dir: str, source_dir: str) -> None:
     for file in os.listdir(source_dir):
         if file.endswith(".png"):
             src_path = os.path.join(source_dir, file)
@@ -220,16 +286,29 @@ def ollama_session():
     finally:
         shutdown_process(proc)
 
+
 @contextmanager
 def comfyui_session():
     proc = start_comfyui()
     try:
-        wait_response('http://127.0.0.1:8188/object_info')
+        wait_response("http://127.0.0.1:8188/object_info")
         yield
     finally:
         shutdown_process(proc)
 
-def wait_response(url, timeout=30):
+
+def wait_response(url: str, timeout=30) -> None:
+    """
+    Poll URL until content is returned
+
+    Parameters:
+    - host (str): url to poll, ie: https://<ip>/object_info
+    - timeout (int): Max seconds to wait for the server to become responsive.
+
+    Raises:
+        TimeoutError: On timeout expiration
+
+    """
     start = time.time()
     while time.time() - start < timeout:
         try:
@@ -242,7 +321,7 @@ def wait_response(url, timeout=30):
     raise TimeoutError("Timed out waiting for ComfyUI to start")
 
 
-def start_ollama():
+def start_ollama() -> subprocess.Popen:
     """
     Ensures the Ollama server is running. If not, starts it and waits until it's ready.
 
@@ -255,12 +334,15 @@ def start_ollama():
 
     """
 
-    #Start Ollama server
-    return subprocess.Popen(['ollama', 'serve'], 
-                            stdout=subprocess.DEVNULL, 
-                            stderr=subprocess.DEVNULL)
+    # Start Ollama server
+    return subprocess.Popen(
+        ["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+    )
 
-def start_comfyui(comfyui_dir="./ComfyUI", port=8188, auto_launch=False):
+
+def start_comfyui(
+    comfyui_dir="./ComfyUI", port=8188, auto_launch=False
+) -> subprocess.Popen:
     """
     Starts the ComfyUI server as a subprocess.
 
@@ -278,25 +360,21 @@ def start_comfyui(comfyui_dir="./ComfyUI", port=8188, auto_launch=False):
     ]
 
     x = subprocess.Popen(
-        command,
-        cwd=comfyui_dir,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
+        command, cwd=comfyui_dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
 
     return x
 
-def shutdown_process(process):
+
+def shutdown_process(process: subprocess.Popen) -> None:
     """
     Gracefully shuts down the ComfyUI subprocess.
 
     Parameters:
         process (subprocess.Popen): The process handle returned by start_comfyui().
     """
-    if process:
-        try:
-            process.terminate()
-            process.wait(timeout=10)
-        except Exception as e:
-            print(f"Warning: Failed to shut down ComfyUI cleanly: {e}")
-
+    try:
+        process.terminate()
+        process.wait(timeout=10)
+    except Exception as e:
+        print(f"Warning: Failed to shut down ComfyUI cleanly: {e}")

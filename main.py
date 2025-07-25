@@ -16,46 +16,59 @@ from pdb import set_trace
 from pipeline import Visual_asset_pipeline
 from lib.utils import comfyui_session, ollama_session, copy_files
 
-def execute_pipeline(filepath:str, client:str, random_clusters:bool) -> tuple:
+
+def execute_pipeline(filepath: str, client: str, random_clusters: bool, verbose: bool) -> tuple:
     try:
-        with open(filepath, 'r', encoding='utf-8') as meeting_notes:
-            kwargs = {'notes': meeting_notes.read(), "client_id": client}
-        
-        #
+        with open(filepath, "r", encoding="utf-8") as meeting_notes:
+            kwargs = {"notes": meeting_notes.read(), "client_id": client, "verbose": verbose}
+
         Pipeline = Visual_asset_pipeline(**kwargs)
         Pipeline.generate_sentence_embeddings()
         Pipeline.compute_optimal_clusters()
-        
+
         with ollama_session():
             Pipeline.generate_image_prompts(random_clusters=random_clusters)
-        
+
         with comfyui_session():
-            Pipeline.generate_images()       
-        
-        copy_files('./out','./ComfyUI/output')
+            Pipeline.generate_images()
+
+        copy_files("./out", "./ComfyUI/output")
     except Exception as e:
-        #TODO: Catch individual exceptions and log accordingly
+        # TODO: Catch individual exceptions and log accordingly
         print(e)
-    
-    return 0, '' 
+
+    return 0, ""
+
 
 class Arg_parser:
     def __init__(self):
         self.parser = argparse.ArgumentParser(
-            description="Script that requires a file path input."
+            description="Generate an Image from informal text"
         )
         self._add_arguments()
 
     def _add_arguments(self):
-        
-        self.parser.add_argument('filepath',
+
+        self.parser.add_argument(
+            "filepath",
             type=self._valid_file,
-            help="Path to the input file (must exist).")
-        self.parser.add_argument('--client', 
-                                 help='Specifies a client name. Used for output filenames')
-        self.parser.add_argument('--random-clusters', 
-                                 default=False, 
-                                 help='Specifies whether to generate additional images from randomly sampled clusters')
+            help="Path to the input file (must exist).",
+        )
+        self.parser.add_argument(
+            "--client", help="Specifies a client name. Used for output filenames"
+        )
+        self.parser.add_argument(
+            "--random-clusters",
+            default=False, 
+            action='store_true',
+            help="Specifies whether to generate additional images from randomly sampled clusters",
+        )
+        self.parser.add_argument(
+            "--verbose",
+            default=False,
+            action='store_true',
+            help="Log additional prompt information",
+        )
 
     def _valid_file(self, path):
         if not os.path.isfile(path):
@@ -64,6 +77,7 @@ class Arg_parser:
 
     def parse_args(self):
         return self.parser.parse_args()
+
 
 if __name__ == "__main__":
     parser = Arg_parser()
